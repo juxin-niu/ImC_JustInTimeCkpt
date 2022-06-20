@@ -1,5 +1,7 @@
 
 #include <ImC/analysis/uart2target.h>
+#include <stdio.h>
+#include <string.h>
 
 void uart2target_init()
 {
@@ -22,4 +24,25 @@ void uart2target_init()
     }
 
     EUSCI_A_UART_enable(UART_BASEADDR);             // Enable UART.
+}
+
+
+int fputc(int _c, register FILE *_fp)
+{
+  EUSCI_A_UART_transmitData(UART_BASEADDR, (unsigned char) _c );
+  return((unsigned char)_c);
+}
+
+int fputs(const char *_ptr, register FILE *_fp)
+{
+  unsigned int i, len;
+
+  len = strlen(_ptr);
+
+  for(i=0 ; i<len ; i++)
+  {
+    EUSCI_A_UART_transmitData(UART_BASEADDR, (unsigned char) _ptr[i]);
+  }
+
+  return len;
 }

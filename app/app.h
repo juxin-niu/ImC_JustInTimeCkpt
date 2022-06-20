@@ -14,4 +14,7 @@ void DIJKSTRA_main();
 void RSA_main();
 void SORT_main();
 
+typedef void (*TASKMAIN)();
+
+
 #endif /* APPS_APP_H_ */
