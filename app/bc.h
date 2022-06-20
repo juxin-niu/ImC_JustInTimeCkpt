@@ -3,7 +3,7 @@
 #define APPS_BITCOUNT_H_
 
 #define BITCOUNT_SEED               4L
-#define BITCOUNT_ITER               100
+#define BITCOUNT_ITER               128
 #define BITCOUNT_CHARBIT            8
 
 #include <stdint.h>

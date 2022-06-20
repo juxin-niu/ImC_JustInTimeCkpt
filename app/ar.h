@@ -7,10 +7,10 @@
 #include <stdint.h>
 
 #define AR_NUM_WARMUP_SAMPLES   3       // Number of samples to discard before recording training set
-#define AR_ACCEL_WINDOW_SIZE    3
+#define AR_ACCEL_WINDOW_SIZE    4
 #define AR_MODEL_SIZE           5
-#define AR_SAMPLE_NOISE_FLOOR   10      // TODO: (This TODO is from InK) made up value
-#define AR_SAMPLES_TO_COLLECT   32      // Number of classifications to complete in one experiment
+#define AR_SAMPLE_NOISE_FLOOR   10
+#define AR_SAMPLES_TO_COLLECT   20      // Number of classifications to complete in one experiment
 
 typedef threeAxis_t_8 accelReading;
 typedef accelReading accelWindow[AR_ACCEL_WINDOW_SIZE];

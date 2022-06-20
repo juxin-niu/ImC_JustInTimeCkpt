@@ -2,32 +2,32 @@
 #include <app/rsa.h>
 #include <stdint.h>
 
-const uint8_t* msgPtr = RSA_MSG;
 
-__nv uint16_t public_n;
-__nv uint16_t phi_n;
-
-__nv uint16_t sqrt_candidate_e;
 __nv uint16_t candidate_e;
 __nv uint16_t e_number;
 __nv uint16_t enc_index;
 __nv uint16_t dec_index;
+
+__nv uint16_t public_n;
+__nv uint16_t phi_n;
+__nv uint16_t sqrt_candidate_e;
 
 __nv uint16_t secret_d[RSA_MSGLENGTH];
 __nv uint16_t public_e[RSA_MSGLENGTH];
 __nv uint16_t enc_cipher[RSA_MSGLENGTH];
 __nv uint16_t dec_plain[RSA_MSGLENGTH];
 
+inline uint8_t RSA_isPrime(uint16_t x, uint16_t sqrt_x);
+inline uint16_t RSA_ModInv(uint16_t u, uint16_t v);
+inline uint16_t RSA_Sqrt16(uint16_t x);
+inline uint16_t RSA_PowerMod(uint16_t a, uint16_t b, uint16_t mod);
 
-uint8_t RSA_isPrime(uint16_t x, uint16_t sqrt_x);
-uint16_t RSA_ModInv(uint16_t u, uint16_t v);
-uint16_t RSA_Sqrt16(uint16_t x);
-uint16_t RSA_PowerMod(uint16_t a, uint16_t b, uint16_t mod);
+const uint8_t* msgPtr = RSA_MSG;
 
 void RSA_main()
 {
     // Initialization
-    const uint16_t p = 7, q = 11;
+    const uint16_t p = 11, q = 13;
     uint16_t i;
 
     public_n = p * q;
@@ -74,7 +74,7 @@ void RSA_main()
 }
 
 
-uint16_t RSA_PowerMod(uint16_t a, uint16_t b, uint16_t mod)
+inline uint16_t RSA_PowerMod(uint16_t a, uint16_t b, uint16_t mod)
 {
     uint16_t ans = 1;
     a = a % mod;
@@ -87,10 +87,7 @@ uint16_t RSA_PowerMod(uint16_t a, uint16_t b, uint16_t mod)
     return ans;
 }
 
-/* Square root by Newton's method
- * This code is from InK
- * */
-uint16_t RSA_Sqrt16(uint16_t x)
+inline uint16_t RSA_Sqrt16(uint16_t x)
 {
     uint16_t hi = 0xffff;
     uint16_t lo = 0;
@@ -112,7 +109,7 @@ uint16_t RSA_Sqrt16(uint16_t x)
 
 /* https://www.di-mgt.com.au/euclidean.html#extendedeuclidean
  *  */
-uint16_t RSA_ModInv(uint16_t u, uint16_t v)
+inline uint16_t RSA_ModInv(uint16_t u, uint16_t v)
 {
     uint16_t inv, u1, u3, v1, v3, t1, t3, q;
     int16_t iter;
@@ -136,7 +133,7 @@ uint16_t RSA_ModInv(uint16_t u, uint16_t v)
     return inv;
 }
 
-uint8_t RSA_isPrime(uint16_t x, uint16_t sqrt_x)
+inline uint8_t RSA_isPrime(uint16_t x, uint16_t sqrt_x)
 {
     uint16_t i;
     for (i = 3; i <= sqrt_x; i += 2)

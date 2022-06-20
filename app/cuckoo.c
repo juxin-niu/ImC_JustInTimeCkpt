@@ -1,27 +1,30 @@
 #include <app/cuckoo.h>
 #include <app/app.h>
-#include <stdlib.h>
 
 // Shared Variables
- __nv cuckoo_fingerprint_t   _v_filter[CUCKOO_NUM_BUCKETS];
- __nv cuckoo_index_t         _v_index;
  __nv cuckoo_value_t         _v_key;
- __nv TaskName               _v_next_task;
- __nv cuckoo_fingerprint_t   _v_fingerprint;
- __nv cuckoo_value_t         _v_index1;
- __nv cuckoo_value_t         _v_index2;
- __nv cuckoo_value_t         _v_relocation_count;
+
  __nv cuckoo_value_t         _v_insert_count;
  __nv cuckoo_value_t         _v_inserted_count;
+
  __nv cuckoo_value_t         _v_lookup_count;
  __nv cuckoo_value_t         _v_member_count;
+
+ __nv cuckoo_fingerprint_t   _v_filter[CUCKOO_NUM_BUCKETS];
+ __nv cuckoo_value_t         _v_index1;
+ __nv cuckoo_value_t         _v_index2;
+ __nv cuckoo_fingerprint_t   _v_fingerprint;
+ __nv cuckoo_value_t         _v_relocation_count;
+
+ __nv cuckoo_index_t         _v_index;
+ __nv TaskName               _v_next_task;
  __nv uint16_t               _v_success;
  __nv uint16_t               _v_member;
 
 
- cuckoo_hash_t CUCKOO_DjbHash(uint8_t* data, uint16_t len);
- cuckoo_index_t CUCKOO_Hash2Index(cuckoo_fingerprint_t fp);
- cuckoo_fingerprint_t CUCKOO_Hash2Fingerprint(cuckoo_value_t key);
+inline cuckoo_hash_t CUCKOO_DjbHash(uint8_t* data, uint16_t len);
+inline cuckoo_index_t CUCKOO_Hash2Index(cuckoo_fingerprint_t fp);
+inline cuckoo_fingerprint_t CUCKOO_Hash2Fingerprint(cuckoo_value_t key);
 
 
 void CUCKOO_main()
@@ -100,7 +103,7 @@ void CUCKOO_main()
         {
             cuckoo_fingerprint_t fp_victim;
             cuckoo_index_t index_victim;
-            if (rand() % 2)
+            if (_v_key % 2)
             {
                 index_victim = __cry_idx;
                 fp_victim = _v_filter[__cry_idx];
@@ -191,7 +194,7 @@ void CUCKOO_main()
 
 }
 
-cuckoo_hash_t CUCKOO_DjbHash(uint8_t* data, uint16_t len)
+inline cuckoo_hash_t CUCKOO_DjbHash(uint8_t* data, uint16_t len)
 {
     uint16_t hash = 5381;
     uint16_t i;
@@ -202,13 +205,13 @@ cuckoo_hash_t CUCKOO_DjbHash(uint8_t* data, uint16_t len)
     return hash & 0xFFFF;
 }
 
-cuckoo_index_t CUCKOO_Hash2Index(cuckoo_fingerprint_t fp)
+inline cuckoo_index_t CUCKOO_Hash2Index(cuckoo_fingerprint_t fp)
 {
     cuckoo_hash_t hash = CUCKOO_DjbHash((uint8_t *) &fp, sizeof(cuckoo_fingerprint_t));
     return hash & (CUCKOO_NUM_BUCKETS - 1); // NUM_BUCKETS must be power of 2
 }
 
-cuckoo_fingerprint_t CUCKOO_Hash2Fingerprint(cuckoo_value_t key)
+inline cuckoo_fingerprint_t CUCKOO_Hash2Fingerprint(cuckoo_value_t key)
 {
     return CUCKOO_DjbHash((uint8_t *) &key, sizeof(cuckoo_value_t));
 }

@@ -2,33 +2,33 @@
 #include <app/app.h>
 
 // Shared Varaibles
+__nv uint16_t        i_debug;
+__nv uint16_t        ar_v_seed;
+
+__nv uint16_t        _v_count;
 __nv uint16_t        _v_pinState;
-__nv uint16_t        _v_discardedSamplesCount;
-__nv ar_class_t      _v_class;
+__nv uint16_t        _v_samplesInWindow;
 __nv uint16_t        _v_totalCount;
 __nv uint16_t        _v_movingCount;
 __nv uint16_t        _v_stationaryCount;
-__nv accelReading    _v_window[AR_ACCEL_WINDOW_SIZE];
-__nv ar_features_t   _v_features;
+__nv uint16_t        _v_discardedSamplesCount;
 __nv uint16_t        _v_trainingSetSize;
-__nv uint16_t        _v_samplesInWindow;
+
+__nv ar_class_t      _v_class;
 __nv ar_run_mode_t   _v_mode;
-__nv uint16_t        _v_count;
+__nv ar_features_t   _v_features;
 __nv uint16_t        _v_meanmag;
 __nv uint16_t        _v_stddevmag;
+__nv accelReading    _v_window[AR_ACCEL_WINDOW_SIZE];
 __nv ar_features_t   _v_model_stationary[AR_MODEL_SIZE];
 __nv ar_features_t   _v_model_moving[AR_MODEL_SIZE];
 
-// DEBUG only.
-__nv uint16_t resultStationaryPct[5] = {0};
-__nv uint16_t resultMovingPct[5] = {0};
-__nv uint16_t sum[5] = {0};
-__nv uint16_t i_debug = 0;
+__nv uint16_t resultStationaryPct[4];
+__nv uint16_t resultMovingPct[4];
+__nv uint16_t sum[4];
 
 void AR_SingleSample(threeAxis_t_8* result);
 
-uint16_t ar_v_seed = 2048;
-// When ar_v_seed is modified, the run results changes.
 
 void AR_main()
 {
@@ -45,6 +45,7 @@ void AR_main()
     ar_features_t ms, mm;       // Used in AR_Classify
 
     i_debug = 0;
+    ar_v_seed = 0x1111;
     _v_pinState = MODE_IDLE;
     _v_count = 0;
 
@@ -53,18 +54,15 @@ void AR_main()
     pin_state = MODE_TRAIN_MOVING;  // 1
     _v_count++;
 
-    if(_v_count >= 4)            goto quit;
+    if(_v_count >= 7)            goto quit;
     else if(_v_count >= 3)       pin_state = MODE_RECOGNIZE;        // 0
     else if(_v_count >= 2)       pin_state = MODE_TRAIN_STATIONARY; // 2
 
     if ( (pin_state == MODE_TRAIN_STATIONARY || pin_state == MODE_TRAIN_MOVING)
-            && (pin_state == _v_pinState)
-            )
-    {
+            && (pin_state == _v_pinState) ) {
         pin_state = MODE_IDLE;
     }
-    else
-    {
+    else {
         _v_pinState = pin_state;
     }
 
@@ -237,7 +235,7 @@ void AR_main()
 
     _v_class = (move_less_error > stat_less_error) ? CLASS_MOVING : CLASS_STATIONARY;
 
-
+    AR_Stats:
     _v_totalCount++;
     switch(_v_class)
     {

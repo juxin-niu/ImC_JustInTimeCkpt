@@ -4,11 +4,11 @@
 
 #include <stdint.h>
 
-#define CUCKOO_NUM_BUCKETS          64                          // must be a power of 2
-#define CUCKOO_NUM_INSERTS          (CUCKOO_NUM_BUCKETS / 4)    // shoot for 25% occupancy
+#define CUCKOO_NUM_BUCKETS          256                          // must be a power of 2
+#define CUCKOO_NUM_INSERTS          (CUCKOO_NUM_BUCKETS / 2)    // shoot for 25% occupancy
 #define CUCKOO_NUM_LOOKUPS          CUCKOO_NUM_INSERTS
 #define CUCKOO_MAX_RELOCATIONS      8
-#define CUCKOO_BUFFER_SIZE          32
+#define CUCKOO_BUFFER_SIZE          128
 
 typedef uint16_t cuckoo_value_t;
 typedef uint16_t cuckoo_hash_t;

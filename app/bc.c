@@ -2,6 +2,10 @@
 #include <app/bc.h>
 
 // Shared Variables
+
+__nv uint32_t _v_seed;
+__nv uint16_t _v_iter;
+__nv uint16_t _v_func;
 __nv uint16_t _v_n_0;
 __nv uint16_t _v_n_1;
 __nv uint16_t _v_n_2;
@@ -9,9 +13,6 @@ __nv uint16_t _v_n_3;
 __nv uint16_t _v_n_4;
 __nv uint16_t _v_n_5;
 __nv uint16_t _v_n_6;
-__nv uint16_t _v_func;
-__nv uint32_t _v_seed;
-__nv uint16_t _v_iter;
 
 int Bitcount_RecursiveCnt(uint32_t x);
 int Bitcount_NonRecursiveCnt(uint32_t x);

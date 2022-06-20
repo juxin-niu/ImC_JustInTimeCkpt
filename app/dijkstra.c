@@ -2,13 +2,14 @@
 #include <app/app.h>
 
 // Shared Variables
-__nv dijkstra_queue_t  queue[DIJKSTRA_QSIZE];
-__nv uint16_t deq_idx;
-__nv uint16_t enq_idx;
-__nv uint16_t node_idx;
-__nv uint16_t src_node;
-__nv dijkstra_queue_t  nearest_node;
-__nv dijkstra_node_t   node_list[DIJKSTRA_NNODES];
+__nv uint16_t           deq_idx;
+__nv uint16_t           enq_idx;
+__nv uint16_t           node_idx;
+__nv dijkstra_node_t    node_list[DIJKSTRA_NNODES];
+
+__nv dijkstra_queue_t   queue[DIJKSTRA_QSIZE];
+__nv uint16_t           src_node;
+__nv dijkstra_queue_t   nearest_node;
 
 void DIJKSTRA_main()
 {

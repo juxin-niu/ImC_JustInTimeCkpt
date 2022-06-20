@@ -3,24 +3,26 @@
 #include <stdio.h>
 
 // Shared Variables
- __nv cem_node_t     _v_compressed_data[CEM_BLOCK_SIZE];
- __nv cem_letter_t   _v_letter;
  __nv uint16_t       _v_letter_idx;
  __nv cem_sample_t   _v_prev_sample;
- __nv cem_index_t    _v_out_len;
- __nv cem_index_t    _v_node_count;
- __nv cem_sample_t   _v_sample;
  __nv cem_index_t    _v_sample_count;
  __nv cem_index_t    _v_sibling;
+ __nv cem_index_t    _v_node_count;
+ __nv cem_index_t    _v_out_len;
+
+ __nv cem_letter_t   _v_letter;
+ __nv cem_sample_t   _v_sample;
  __nv cem_index_t    _v_child;
  __nv cem_index_t    _v_parent;
  __nv cem_index_t    _v_parent_next;
  __nv cem_node_t     _v_parent_node;
  __nv cem_node_t     _v_sibling_node;
  __nv cem_index_t    _v_symbol;
+
+ __nv cem_node_t     _v_compressed_data[CEM_BLOCK_SIZE];
  __nv cem_node_t     _v_dict[CEM_DICT_SIZE];
 
- static inline cem_sample_t CEM_AcquireSample(cem_letter_t prev_sample);
+inline cem_sample_t CEM_AcquireSample(cem_letter_t prev_sample);
 
 void CEM_main()
 {
@@ -93,6 +95,7 @@ void CEM_main()
     letter = ( _v_sample & (CEM_LETTER_MASK << letter_shift) ) >> letter_shift;
     _v_letter = letter;
 
+    Compress:
     parent = _v_parent_next;
     _v_parent_node.letter = _v_dict[parent].letter;
     _v_parent_node.sibling = _v_dict[parent].sibling;
@@ -172,6 +175,7 @@ void CEM_main()
     _v_symbol = _v_parent;
     _v_node_count++;
 
+    AppendCompressed:
     _v_compressed_data[_v_out_len].letter = _v_symbol;
     _v_out_len++;
     if(_v_out_len == CEM_BLOCK_SIZE)
@@ -181,7 +185,7 @@ void CEM_main()
 }
 
 
- static inline cem_sample_t CEM_AcquireSample(cem_letter_t prev_sample)
+inline cem_sample_t CEM_AcquireSample(cem_letter_t prev_sample)
  {
      cem_letter_t sample = (prev_sample + 1) & 0x03;
      return sample;

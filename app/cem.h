@@ -7,8 +7,8 @@
 
 #define CEM_NIL                         0 // like NULL, but for indexes, not real pointers
 
-#define CEM_DICT_SIZE                   128
-#define CEM_BLOCK_SIZE                  64
+#define CEM_DICT_SIZE                   192
+#define CEM_BLOCK_SIZE                  96
 
 #define CEM_NUM_LETTERS_IN_SAMPLE       2
 #define CEM_LETTER_MASK                 0x000F
