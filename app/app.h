@@ -4,6 +4,7 @@
 #define APPS_APP_H_
 
 #include <ImC/nv.h>
+#include <stdint.h>
 
 void AR_main();
 void BC_main();

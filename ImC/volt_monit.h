@@ -4,7 +4,7 @@
 
 void ref_volt_init();
 
-void adc_timer_init();
+void adc_timer_init(uint16_t timePeriod);
 
 void adc_init();
 

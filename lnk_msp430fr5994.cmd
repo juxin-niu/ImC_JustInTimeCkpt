@@ -166,6 +166,9 @@ SECTIONS
 
     } > 0x4000
 
+    .bss        	  : {}  > FRAM          /* Global & static vars              */
+    .data       	  : {}  > FRAM          /* Global & static vars              */
+    .TI.noinit  	  : {}  > FRAM          /* For #pragma noinit                */
     .cinit            : {}  > FRAM          /* Initialization tables             */
     .binit            : {}  > FRAM          /* Boot-time Initialization tables   */
     .pinit            : {}  > FRAM          /* C++ Constructor tables            */
@@ -205,9 +208,9 @@ SECTIONS
         .jtagpassword       : {}            /* JTAG Password                     */
     } > IPESIGNATURE
 
-    .bss        : {} > RAM                  /* Global & static vars              */
-    .data       : {} > RAM                  /* Global & static vars              */
-    .TI.noinit  : {} > RAM                  /* For #pragma noinit                */
+    // .bss        : {} > RAM                  /* Global & static vars              */
+    // .data       : {} > RAM                  /* Global & static vars              */
+    // .TI.noinit  : {} > RAM                  /* For #pragma noinit                */
     .stack      : {} > RAM (HIGH)           /* Software system stack             */
 
     .tinyram    : {} > TINYRAM              /* Tiny RAM                          */

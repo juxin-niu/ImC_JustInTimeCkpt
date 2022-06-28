@@ -3,6 +3,7 @@
 #define APPS_SORT_H_
 
 #include <stdint.h>
+#include <ImC/nv.h>
 
 #define SORT_LENGTH  100
 
@@ -13,6 +14,5 @@ const uint16_t raw[SORT_LENGTH] = {
       80,  79,  78,  77,  76,  75,  74,  73,  72,  71,  70,  69,  68,  67,  66,  65,  64,  63,  62,  61,
      100,  99,  98,  97,  96,  95,  94,  93,  92,  91,  90,  89,  88,  87,  86,  85,  84,  83,  82,  81
 };
-
 
 #endif /* APPS_SORT_H_ */

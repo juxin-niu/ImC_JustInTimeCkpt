@@ -42,5 +42,11 @@ void SORT_main()
         goto task_inner_loop;
 
     /* *************************** */
+    for (inner_index = 1; inner_index < SORT_LENGTH; ++inner_index) {
+        val_inner = sorted[inner_index - 1];
+        val_outer = sorted[inner_index];
+        if (val_inner >= val_outer)
+            data_consistency_error_flag = 1;
+    }
     return;
 }
