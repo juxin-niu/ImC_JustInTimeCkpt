@@ -11,6 +11,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+typedef void (*TBFUNCPTR)();
+
 __nv uint8_t snapshot_taking_error_flag = false;
 __nv uint8_t data_consistency_error_flag = false;
 __nv uint8_t task_success_flag = false;
@@ -18,14 +20,19 @@ __nv uint8_t task_success_flag = false;
 __nv uint8_t recovery_needed = 0;
 __nv uint8_t system_in_lpm = 0;
 
+__nv TBFUNCPTR tb_main[8] = {AR_main, BC_main, CEM_main, CRC_main, CUCKOO_main,
+                             DIJKSTRA_main, RSA_main, SORT_main};
+
+__nv bool hamming_init_flag = false;
+__nv uint8_t hamming_scode[8] = {};
+__nv uint8_t hamming_ecode[8] = {};
+
 extern void take_snapshot();
 extern void recovery();
-
 
 #define VOLT_MONIT_INTERVAL_IN_US         1000  // TODO: choose a proper value
 #define SNAPSHOT_VOLT_THRESHOLD            800  // TODO: choose a proper value
 #define RECOVERY_VOLT_THRESHOLD           1000  // TODO: choose a proper value
-
 
 int main()
 {
@@ -36,6 +43,14 @@ int main()
     ref_volt_init();
     adc_timer_init(VOLT_MONIT_INTERVAL_IN_US * WORKING_FREQUENCY_IN_MHZ);
     adc_init();
+
+    if (hamming_init_flag == false) {
+        for (uint16_t i = 0; i < 8; ++i) {
+            hamming_scode[i] = hamming_enc(2 * i);
+            hamming_ecode[i] = hamming_enc(2 * i + 1);
+        }
+        hamming_init_flag = true;
+    }
 
     // DEBUG ONLY.
     /* This flag is only used in Debug tests. We found that when the CCS project was in Flash,
@@ -56,7 +71,7 @@ int main()
     // SYSTEM STATE FLAGS.
     /* These flags are used to indicate the successful operation or exception of the system.
      * -- If the RED light is on, it means that the system has a data consistency error.
-     *    Data-consistency error flag is set in apps.
+     *    Data-consistency error flag is set in every testbench.
      * -- If the GREEN light is on, it means that there is not enough power to complete the snapshot,
      *    which means that the capacitor capacity needs to be increased and the snapshot voltage
      *    threshold needs to be increased.
@@ -79,14 +94,14 @@ int main()
     recovery_needed = 1;
 
     // TODO: Tasks here.
-    AR_main();
-    BC_main();
-    CEM_main();
-    CRC_main();
-    CUCKOO_main();
-    DIJKSTRA_main();
-    RSA_main();
-    SORT_main();
+    uint16_t repeat_time = 6;
+    while ((repeat_time--) != 0) {
+        for (uint16_t i = 0; i < 8; ++i) {
+            EUSCI_A_UART_transmitData(UART_BASEADDR, hamming_scode[i]);
+            (* tb_main[i] )();
+            EUSCI_A_UART_transmitData(UART_BASEADDR, hamming_ecode[i]);
+        }
+    }
 
     task_success_flag = 1;      // Tasks success.
     __bic_SR_register(GIE);     // Disable interrupt.

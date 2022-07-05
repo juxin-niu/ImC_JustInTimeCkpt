@@ -47,15 +47,7 @@ void BC_main()
     case 4:     goto BW_BTBL;
     case 5:     goto AR_BTBL;
     case 6:     goto Bit_Shifter;
-    default:    {
-        if (_v_n_1 != _v_n_2 ||
-                _v_n_2 != _v_n_3 ||
-                _v_n_3 != _v_n_4 ||
-                _v_n_4 != _v_n_5 ||
-                _v_n_5 != _v_n_6 ||
-                _v_n_6 != _v_n_1)   data_consistency_error_flag = 1;
-        return;
-    }
+    default:    return;
     }
 
     // ===========================================================
