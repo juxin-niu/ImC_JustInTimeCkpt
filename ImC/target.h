@@ -2,7 +2,7 @@
 #ifndef IMC_TARGET_H_
 #define IMC_TARGET_H_
 
-#define WORKING_FREQUENCY_IN_MHZ    4
+#define WORKING_FREQUENCY_IN_MHZ    1
 //!                                -1 (in 1MHz)
 //!                                -2 (in 2MHz)
 //!                                -4 (in 4MHz)

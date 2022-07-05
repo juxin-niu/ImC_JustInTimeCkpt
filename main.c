@@ -1,12 +1,12 @@
 #include <ImC/nv.h>
-#include <ImC/target_spec.h>
 #include <ImC/target.h>
 #include <ImC/volt_monit.h>
 #include <ImC/analysis/hamming8.h>
 #include <ImC/analysis/uart2target.h>
 
 #include <app/app.h>
-
+#include <ImC/driverlib_include.h>
+#include <ImC/led_button.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -21,9 +21,10 @@ __nv uint8_t system_in_lpm = 0;
 extern void take_snapshot();
 extern void recovery();
 
-#define VOLT_MONIT_INTERVAL_IN_US   1000 /* Voltage measurement interval */
-#define SNAPSHOT_VOLT_THRESHOLD     3000 /* ~3.00V */
-#define RECOVERY_VOLT_THRESHOLD     3600 /* ~3.20V */
+
+#define VOLT_MONIT_INTERVAL_IN_US         1000  // TODO: choose a proper value
+#define SNAPSHOT_VOLT_THRESHOLD            800  // TODO: choose a proper value
+#define RECOVERY_VOLT_THRESHOLD           1000  // TODO: choose a proper value
 
 
 int main()
@@ -62,32 +63,44 @@ int main()
      *
      * -- If the RED and GREEN lights are on at the same time, the system has successfully completed
      *    all tasks.
+     *
      * The green light has a higher priority than the red light, which means that we can detect data
      * consistency errors due to backup failures.
      */
-    if (data_consistency_error_flag == true)    { turn_on_red_led;                    LPM1; }
     if (snapshot_taking_error_flag == true)     { turn_on_green_led;                  LPM1; }
+    if (data_consistency_error_flag == true)    { turn_on_red_led;                    LPM1; }
     if (task_success_flag == true)              { turn_on_green_led; turn_on_red_led; LPM1; }
 
     /* Start ADC and its TimerA */
-    ADC12_B_startConversion(ADC12_B_BASE, ADC12_B_MEMORY_0, ADC12_B_REPEATED_SINGLECHANNEL);
-    Timer_A_startCounter(TIMER_A0_BASE, TIMER_A_UP_MODE);
+    adc_start;
 
     system_in_lpm = 1;                      // System Enter LPM01.
     __bis_SR_register(GIE | LPM1_bits);     // After initialization, Enable Interrupt and enter LPM1;
     recovery_needed = 1;
 
     // TODO: Tasks here.
-
+    AR_main();
+    BC_main();
+    CEM_main();
+    CRC_main();
+    CUCKOO_main();
+    DIJKSTRA_main();
+    RSA_main();
+    SORT_main();
 
     task_success_flag = 1;      // Tasks success.
     __bic_SR_register(GIE);     // Disable interrupt.
+
 }
 
+#if defined(__MSP430FR5994__) || defined(__MSP430FR5969__)
 #pragma vector = ADC12_VECTOR
+#elif defined(__MSP430FR2433__)
+#pragma vector=ADC_VECTOR
+#endif
 __interrupt void ADC12_ISR(void)
 {
-    register uint16_t volt = HWREG16(ADC12_B_BASE + (OFS_ADC12MEM0 + ADC12_B_MEMORY_0));
+    register uint16_t volt = adc_read_memory;
 
     if (system_in_lpm == 1 && volt > RECOVERY_VOLT_THRESHOLD) {
         if (recovery_needed == 0) {
@@ -113,18 +126,17 @@ __interrupt void ADC12_ISR(void)
 
     else goto default_exit;
 
-    default_exit:
-    HWREG16(ADC12_B_BASE + OFS_ADC12IFGR0) &= ~(ADC12_B_IFG0);
-    return;
-
     safe_exit_and_running:
     system_in_lpm = 0;
     __bic_SR_register_on_exit(LPM1_bits);
-    HWREG16(ADC12_B_BASE + OFS_ADC12IFGR0) &= ~(ADC12_B_IFG0);
+    // Go on to dafault_exit.
+
+    default_exit:
+    adc_clear_interrupt;
     return;
 
     sleep:
     system_in_lpm = 1;
-    HWREG16(ADC12_B_BASE + OFS_ADC12IFGR0) &= ~(ADC12_B_IFG0);
-    __bis_SR_register(GIE | LPM1_bits);     // Nested interrupt enabled.
+    adc_clear_interrupt;
+    __bis_SR_register(GIE | LPM1_bits);     // LPM1 and nested interrupt enabled.
 }

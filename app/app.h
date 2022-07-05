@@ -17,5 +17,6 @@ void SORT_main();
 
 typedef void (*TASKMAIN)();
 
+extern __nv uint8_t data_consistency_error_flag;
 
 #endif /* APPS_APP_H_ */

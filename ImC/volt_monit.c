@@ -1,18 +1,30 @@
 
-#include <ImC/target_spec.h>
+#include <ImC/driverlib_include.h>
+#include <ImC/volt_monit.h>
 
 void ref_volt_init()
 {
-    Ref_A_setReferenceVoltage(REF_A_BASE, REF_A_VREF1_2V);
+#if defined(__MSP430FR5994__) || defined(__MSP430FR5969)
+    Ref_A_setReferenceVoltage(REF_A_BASE, REF_A_VREF2_0V);
     //!        Valid values are:
     //!        - \b REF_A_VREF1_2V [Default]
     //!        - \b REF_A_VREF2_0V
     //!        - \b REF_A_VREF2_5V
+#elif defined(__MSP430FR2433__)
+    // Reference voltage for MSP430FR2433 is 1.5V.
+    // Configure reference module located in the PMM
+    PMMCTL0_H = PMMPW_H;                    // Unlock the PMM registers
+    PMMCTL2 |= INTREFEN;                    // Enable internal reference
+    while(!(PMMCTL2 & REFGENRDY));          // Poll till internal reference settles
+#else
+#error "ERROR: UNSUPPORTED MSP TARGET!"
+#endif
 }
 
 void adc_timer_init(uint16_t timePeriod)
 {
-    // TimerA0 run in continuous mode.
+    // MSP5xxx and MSP2xxx share the same TimerA API.
+
     Timer_A_initUpModeParam timerAInitParam = {0};
     timerAInitParam.clockSource = TIMER_A_CLOCKSOURCE_SMCLK;
     timerAInitParam.clockSourceDivider = TIMER_A_CLOCKSOURCE_DIVIDER_1;
@@ -22,30 +34,31 @@ void adc_timer_init(uint16_t timePeriod)
     timerAInitParam.captureCompareInterruptEnable_CCR0_CCIE = TIMER_A_CCIE_CCR0_INTERRUPT_DISABLE;
     timerAInitParam.timerPeriod = timePeriod;   // ADC interval
 
-    Timer_A_initUpMode(TIMER_A0_BASE, &timerAInitParam);
+    Timer_A_initUpMode(ADC_TRIGGER_TIMERA_BASE, &timerAInitParam);
 
-    // CCR0 run in compare mode and generate interrupt.
     Timer_A_initCompareModeParam compareModeParam = {0};
     compareModeParam.compareInterruptEnable = TIMER_A_CAPTURECOMPARE_INTERRUPT_DISABLE;
     compareModeParam.compareOutputMode = TIMER_A_OUTPUTMODE_TOGGLE_SET;
-                                        // CCR1 trigger every time TA0R reach TA0CCR0.
-    compareModeParam.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_1;
+    compareModeParam.compareRegister = ADC_TRIGGER_TIMERA_CMPREG;
     compareModeParam.compareValue = timePeriod >> 1;
 
-    Timer_A_initCompareMode(TIMER_A0_BASE, &compareModeParam);
+    Timer_A_initCompareMode(ADC_TRIGGER_TIMERA_BASE, &compareModeParam);
+
 }
 
 void adc_init()
 {
-    P1SEL0 |= BIT2;                           // configure P1.2/A2 for ADC function
-    P1SEL1 |= BIT2;                           //
+#if defined(__MSP430FR5994__) || defined(__MSP430FR5969)
+    GPIO_setAsPeripheralModuleFunctionOutputPin(ADC_CHANNEL_INPUT_PORT,
+                                                ADC_CHANNEL_INPUT_PIN,
+                                                ADC_CHANNEL_INPUT_FUNCTION);
 
     ADC12_B_initParam initParam = {0};
     initParam.clockSourceDivider = ADC12_B_CLOCKDIVIDER_1;
     initParam.clockSourcePredivider = ADC12_B_CLOCKPREDIVIDER__1;
     initParam.clockSourceSelect = ADC12_B_CLOCKSOURCE_ADC12OSC;
     initParam.internalChannelMap = ADC12_B_NOINTCH;
-    initParam.sampleHoldSignalSourceSelect = ADC12_B_SAMPLEHOLDSOURCE_1;    // TA0 CCR1 output
+    initParam.sampleHoldSignalSourceSelect = ADC12_B_SAMPLEHOLDSOURCE_1;     // TA0 CCR1 output
 
     ADC12_B_init(ADC12_B_BASE, &initParam);
     ADC12_B_enable(ADC12_B_BASE);
@@ -56,7 +69,7 @@ void adc_init()
                                );
 
     ADC12_B_enableInterrupt(ADC12_B_BASE,
-                            ADC12_B_IE0,    // Interrupt enabled.
+                            ADC12_B_IE0,
                             0,
                             0);
 
@@ -66,8 +79,30 @@ void adc_init()
     configureMemoryParam.endOfSequence = ADC12_B_NOTENDOFSEQUENCE;
     configureMemoryParam.windowComparatorSelect = ADC12_B_WINDOW_COMPARATOR_DISABLE;
     configureMemoryParam.differentialModeSelect = ADC12_B_DIFFERENTIAL_MODE_DISABLE;
-    configureMemoryParam.inputSourceSelect = ADC12_B_INPUT_A2;
-    //!        P1.2 A2
+    configureMemoryParam.inputSourceSelect = ADC_INPUT_SOURCE;
 
     ADC12_B_configureMemory(ADC12_B_BASE, &configureMemoryParam);
+
+#elif defined(__MSP430FR2433__)
+    ADC_init (ADC_BASE,
+              ADC_SAMPLEHOLDSOURCE_2,   // TA1.1B
+              ADC_CLOCKSOURCE_ADCOSC,
+              ADC_CLOCKDIVIDER_1);
+
+    ADC_enable (ADC_BASE);
+
+    ADC_setupSamplingTimer (ADC_BASE,
+                            ADC_CYCLEHOLD_32_CYCLES,
+                            ADC_MULTIPLESAMPLESDISABLE);
+
+    ADC_enableInterrupt (ADC_BASE, ADC_COMPLETED_INTERRUPT);
+
+    ADC_configureMemory (ADC_BASE,
+                         ADC_INPUT_A7,      // P1.7 A7 Analog in.
+                         ADC_VREFPOS_INT,
+                         ADC_VREFNEG_AVSS);
+
+#else
+#error "ERROR: UNSUPPORTED MSP TARGET!"
+#endif
 }

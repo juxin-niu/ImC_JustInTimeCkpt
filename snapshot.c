@@ -1,13 +1,29 @@
 #include <ImC/nv.h>
-#include <ImC/target_spec.h>
 #include <ImC/target.h>
 #include <ImC/volt_monit.h>
 #include <ImC/analysis/hamming8.h>
 #include <ImC/analysis/uart2target.h>
-
+#include <ImC/driverlib_include.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+
+#define BACKUP_USE_CPU
+//      - \b BACKUP_USE_DMA
+//      - \b BACKUP_USE_CPU
+
+#if defined(__MSP430FR5994__)
+    #define TARGET_RAM_ORIGIN       0x1C00
+    #define TARGET_RAM_LENGTH       0x1000
+#elif defined(__MSP430FR5969__)
+    #define TARGET_RAM_ORIGIN       0x1C00
+    #define TARGET_RAM_LENGTH       0x0800
+#elif defined(__MSP430FR2433__)
+    #define TARGET_RAM_ORIGIN       0x2000
+    #define TARGET_RAM_LENGTH       0x1000
+#else
+#error "ERROR: UNSUPPORTED MSP TARGET!"
+#endif
 
 #define REGBUF_LENGTH           (15)
 #define STACKBUF_LENGTH         (200)
@@ -40,23 +56,52 @@ void take_snapshot()
     stackStartAddr = regBuf[0];
     stackBufSizeInWord = (SRAM_TOP - stackStartAddr) >> 1;
 
+#if (defined(__MSP430FR5969__) || defined(__MSP430FR5994__)) && defined(BACKUP_USE_DMA)
     HWREG16(DMA_BASE + DMA_CHANNEL_0 + OFS_DMA0CTL) &= ~DMAEN;
     __data16_write_addr((unsigned short)(DMA_BASE + DMA_CHANNEL_0 + OFS_DMA0SA), (unsigned long)stackStartAddr);
     __data16_write_addr((unsigned short)(DMA_BASE + DMA_CHANNEL_0 + OFS_DMA0DA), (unsigned long)stackBuf);
     HWREG16(DMA_BASE + DMA_CHANNEL_0 + OFS_DMA0SZ) = stackBufSizeInWord;
     HWREG16(DMA_BASE + DMA_CHANNEL_0 + OFS_DMA0CTL) |= DMAEN;
     HWREG16(DMA_BASE + DMA_CHANNEL_0 + OFS_DMA0CTL) |= DMAREQ;
+#elif defined(__MSP430FR2433__) && defined(BACKUP_USE_DMA)
+#error  "MSP430FR2433 DOES NOT HAVE A DMA."
+#elif defined(BACKUP_USE_CPU)
+    register uint16_t *srcPtr = (uint16_t *)stackStartAddr;
+    register uint16_t *dstPtr = stackBuf;
+    register uint16_t numberOfWords = stackBufSizeInWord;
+    while (numberOfWords > 0) {
+        *dstPtr++ = *srcPtr++;
+        numberOfWords--;
+    }
+#else
+#error "ERROR: UNRECOGNIZED UNDO SCHEME!"
+#endif
 
 }
 
 void recovery()
 {
+#if (defined(__MSP430FR5969__) || defined(__MSP430FR5994__)) && defined(BACKUP_USE_DMA)
     HWREG16(DMA_BASE + DMA_CHANNEL_0 + OFS_DMA0CTL) &= ~DMAEN;
     __data16_write_addr((unsigned short)(DMA_BASE + DMA_CHANNEL_0 + OFS_DMA0SA), (unsigned long)stackBuf);
     __data16_write_addr((unsigned short)(DMA_BASE + DMA_CHANNEL_0 + OFS_DMA0DA), (unsigned long)stackStartAddr);
     HWREG16(DMA_BASE + DMA_CHANNEL_0 + OFS_DMA0SZ) = stackBufSizeInWord;
     HWREG16(DMA_BASE + DMA_CHANNEL_0 + OFS_DMA0CTL) |= DMAEN;
     HWREG16(DMA_BASE + DMA_CHANNEL_0 + OFS_DMA0CTL) |= DMAREQ;
+#elif defined(__MSP430FR2433__) && defined(BACKUP_USE_DMA)
+#error  "MSP430FR2433 DOES NOT HAVE A DMA."
+#elif defined(BACKUP_USE_CPU)
+    register uint16_t *srcPtr = stackBuf;
+    register uint16_t *dstPtr = (uint16_t *)stackStartAddr;
+    register uint16_t numberOfWords = stackBufSizeInWord;
+    while (numberOfWords > 0) {
+        *dstPtr++ = *srcPtr++;
+        numberOfWords--;
+    }
+#else
+#error "ERROR: UNRECOGNIZED UNDO SCHEME!"
+#endif
+
 
     /************ Registers ************/
     asm("   MOV.W   &regBuf     , R1  ");
