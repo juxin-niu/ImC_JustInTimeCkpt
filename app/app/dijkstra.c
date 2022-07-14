@@ -1,5 +1,5 @@
-#include <app/dijkstra.h>
-#include <app/app.h>
+#include <app/app_api.h>
+#include <app/app_global.h>
 
 // Shared Variables
 __nv uint16_t           deq_idx;
@@ -16,7 +16,6 @@ void DIJKSTRA_main()
     uint16_t i;
     uint16_t cost, node, dist, nearest_dist;
 
-    // -------------------------------------------------------------
     src_node = 0;
     queue[0].node = src_node;
     queue[0].dist = 0;
@@ -33,7 +32,6 @@ void DIJKSTRA_main()
     node_list[src_node].dist = 0;
     node_list[src_node].prev = DIJKSTRA_UNDEFINED;
 
-    // -------------------------------------------------------------
     Nearest_Node_Sel:
     i = deq_idx;
     if (enq_idx != i)
@@ -56,7 +54,6 @@ void DIJKSTRA_main()
         goto quit;
     }
 
-    // -------------------------------------------------------------
     Shorter_Path_Find:
     node = nearest_node.node;
     i = node_idx;
@@ -90,7 +87,6 @@ void DIJKSTRA_main()
     else
         goto Nearest_Node_Sel;
 
-    // -------------------------------------------------------------
     quit:
     return;
 }

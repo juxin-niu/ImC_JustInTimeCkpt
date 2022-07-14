@@ -1,27 +1,29 @@
 
-#include <ImC/driverlib_include.h>
+#include <board/driverlib_include.h>
+#include <board/target.h>
 #include <stdint.h>
-#include "Imc/target.h"
 
 void power_on_init()
 {
     WDTCTL = WDTPW | WDTHOLD;   // stop watch-dog timer
     PM5CTL0 &= ~LOCKLPM5;       // Disable the GPIO power-on default high-impedance mode
 
-    /* Terminate all GPIO pins to Output LOW to minimize power consumption */
-    GPIO_setOutputLowOnPin(GPIO_PORT_PA, GPIO_PIN_ALL16);
-    GPIO_setOutputLowOnPin(GPIO_PORT_PB, GPIO_PIN_ALL16);
-    GPIO_setOutputLowOnPin(GPIO_PORT_PC, GPIO_PIN_ALL16);
-    GPIO_setOutputLowOnPin(GPIO_PORT_PD, GPIO_PIN_ALL16);
-    GPIO_setOutputLowOnPin(GPIO_PORT_PE, GPIO_PIN_ALL16);
-    GPIO_setOutputLowOnPin(GPIO_PORT_PF, GPIO_PIN_ALL16);
+#if defined(__MSP430FR5994__) || defined(__MSP430FR5969__) || defined(__MSP430FR2433__)
+    P1DIR = 0xFF; P1OUT = 0x00;
+    P2DIR = 0xFF; P2OUT = 0x00;
+    P3DIR = 0xFF; P3OUT = 0x00;
+#endif
+#if defined(__MSP430FR5994__) || defined(__MSP430FR5969__)
+    P4DIR = 0xFF; P4OUT = 0x00;
+    PJDIR = 0xFFFF; PJOUT = 0x0000;
+#endif
+#if defined(__MSP430FR5994__)
+    P5DIR = 0xFF; P5OUT = 0x00;
+    P6DIR = 0xFF; P6OUT = 0x00;
+    P7DIR = 0xFF; P7OUT = 0x00;
+    P8DIR = 0xFF; P8OUT = 0x00;
+#endif
 
-    GPIO_setAsOutputPin(GPIO_PORT_PA, GPIO_PIN_ALL16);
-    GPIO_setAsOutputPin(GPIO_PORT_PB, GPIO_PIN_ALL16);
-    GPIO_setAsOutputPin(GPIO_PORT_PC, GPIO_PIN_ALL16);
-    GPIO_setAsOutputPin(GPIO_PORT_PD, GPIO_PIN_ALL16);
-    GPIO_setAsOutputPin(GPIO_PORT_PE, GPIO_PIN_ALL16);
-    GPIO_setAsOutputPin(GPIO_PORT_PF, GPIO_PIN_ALL16);
 }
 
 

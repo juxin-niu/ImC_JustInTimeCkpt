@@ -1,6 +1,6 @@
 
-#include <ImC/driverlib_include.h>
-#include <ImC/volt_monit.h>
+#include <board/driverlib_include.h>
+#include <board/volt_monit.h>
 
 void ref_volt_init()
 {
@@ -48,7 +48,7 @@ void adc_timer_init(uint16_t timePeriod)
 
 void adc_init()
 {
-#if defined(__MSP430FR5994__) || defined(__MSP430FR5969)
+#if defined(__MSP430FR5994__) || defined(__MSP430FR5969__)
     GPIO_setAsPeripheralModuleFunctionOutputPin(ADC_CHANNEL_INPUT_PORT,
                                                 ADC_CHANNEL_INPUT_PIN,
                                                 ADC_CHANNEL_INPUT_FUNCTION);

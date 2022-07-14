@@ -1,14 +1,10 @@
-#include <ImC/nv.h>
-#include <ImC/target.h>
-#include <ImC/volt_monit.h>
-#include <ImC/analysis/hamming8.h>
-#include <ImC/analysis/uart2target.h>
-#include <ImC/driverlib_include.h>
+
+#include <board/driverlib_include.h>
+#include <board/nv.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdio.h>
 
-#define BACKUP_USE_CPU
+#define BACKUP_USE_DMA
 //      - \b BACKUP_USE_DMA
 //      - \b BACKUP_USE_CPU
 

@@ -1,6 +1,6 @@
 
-#ifndef IMC_DRIVERLIB_INCLUDE_H_
-#define IMC_DRIVERLIB_INCLUDE_H_
+#ifndef BOARD_DRIVERLIB_INCLUDE_H_
+#define BOARD_DRIVERLIB_INCLUDE_H_
 
 #if defined(__MSP430FR5969__) || defined(__MSP430FR5994__)
     #include <lib/driverlib_MSP430FR5xx_6xx/driverlib.h>
@@ -10,4 +10,4 @@
 #error "ERROR: UNSUPPORTED MSP TARGET!"
 #endif
 
-#endif /* IMC_DRIVERLIB_INCLUDE_H_ */
+#endif /* BOARD_DRIVERLIB_INCLUDE_H_ */

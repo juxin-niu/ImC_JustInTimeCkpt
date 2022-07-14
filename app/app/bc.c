@@ -1,5 +1,5 @@
-#include <app/app.h>
-#include <app/bc.h>
+#include <app/app_api.h>
+#include <app/app_global.h>
 
 // Shared Variables
 
@@ -13,10 +13,6 @@ __nv uint16_t _v_n_3;
 __nv uint16_t _v_n_4;
 __nv uint16_t _v_n_5;
 __nv uint16_t _v_n_6;
-
-int Bitcount_RecursiveCnt(uint32_t x);
-int Bitcount_NonRecursiveCnt(uint32_t x);
-
 
 void BC_main()
 {
@@ -50,7 +46,6 @@ void BC_main()
     default:    return;
     }
 
-    // ===========================================================
     func0:
     tmp_seed = _v_seed;
     _v_seed = tmp_seed + 13;
@@ -67,7 +62,6 @@ void BC_main()
     else
         goto Func_Select;
 
-    // ===========================================================
     func1:
     tmp_seed = _v_seed;
     _v_seed = tmp_seed + 13;
@@ -85,7 +79,6 @@ void BC_main()
     else
         goto Func_Select;
 
-    // ===========================================================
     NTBL0:
     tmp_seed = _v_seed;
     _v_n_2 += Bitcount_NonRecursiveCnt(tmp_seed);
@@ -97,18 +90,17 @@ void BC_main()
     else
         goto Func_Select;
 
-    // ===========================================================
     NTBL1:
     __cry = _v_seed;
 
-    _v_n_3 += bits[ (int) (__cry & 0x0000000FUL)] +
-            bits[ (int)((__cry & 0x000000F0UL) >> 4) ] +
-            bits[ (int)((__cry & 0x00000F00UL) >> 8) ] +
-            bits[ (int)((__cry & 0x0000F000UL) >> 12)] +
-            bits[ (int)((__cry & 0x000F0000UL) >> 16)] +
-            bits[ (int)((__cry & 0x00F00000UL) >> 20)] +
-            bits[ (int)((__cry & 0x0F000000UL) >> 24)] +
-            bits[ (int)((__cry & 0xF0000000UL) >> 28)] ;
+    _v_n_3 += bc_bits[ (int) (__cry & 0x0000000FUL)] +
+            bc_bits[ (int)((__cry & 0x000000F0UL) >> 4) ] +
+            bc_bits[ (int)((__cry & 0x00000F00UL) >> 8) ] +
+            bc_bits[ (int)((__cry & 0x0000F000UL) >> 12)] +
+            bc_bits[ (int)((__cry & 0x000F0000UL) >> 16)] +
+            bc_bits[ (int)((__cry & 0x00F00000UL) >> 20)] +
+            bc_bits[ (int)((__cry & 0x0F000000UL) >> 24)] +
+            bc_bits[ (int)((__cry & 0xF0000000UL) >> 28)] ;
 
     tmp_seed = _v_seed;
     _v_seed = tmp_seed + 13;
@@ -118,11 +110,10 @@ void BC_main()
     else
         goto Func_Select;
 
-    // ===========================================================
     BW_BTBL:
     U.y = _v_seed;
-    _v_n_4 += bits[ U.ch[0] ] + bits[ U.ch[1] ] +
-            bits[ U.ch[3] ] + bits[ U.ch[2] ];
+    _v_n_4 += bc_bits[ U.ch[0] ] + bc_bits[ U.ch[1] ] +
+            bc_bits[ U.ch[3] ] + bc_bits[ U.ch[2] ];
 
     tmp_seed = _v_seed;
     _v_seed = tmp_seed + 13;
@@ -132,13 +123,12 @@ void BC_main()
     else
         goto Func_Select;
 
-    // ===========================================================
     AR_BTBL:
     Ptr = (unsigned char *) &_v_seed;
-    Accu  = bits[ *Ptr++ ];
-    Accu += bits[ *Ptr++ ];
-    Accu += bits[ *Ptr++ ];
-    Accu += bits[ *Ptr ];
+    Accu  = bc_bits[ *Ptr++ ];
+    Accu += bc_bits[ *Ptr++ ];
+    Accu += bc_bits[ *Ptr++ ];
+    Accu += bc_bits[ *Ptr ];
     _v_n_5 += Accu;
 
     tmp_seed = _v_seed;
@@ -149,7 +139,6 @@ void BC_main()
     else
         goto Func_Select;
 
-    // ===========================================================
     Bit_Shifter:
 
     tmp_seed = _v_seed;
@@ -170,25 +159,3 @@ void BC_main()
     else
         goto Func_Select;
 }
-
-int Bitcount_RecursiveCnt(uint32_t x)
-{
-    int cnt = bits[(int)(x & 0x0000000FL)];
-
-    if (0L != (x >>= 4))
-        cnt += Bitcount_RecursiveCnt(x);
-
-    return cnt;
-}
-
-int Bitcount_NonRecursiveCnt(uint32_t x)
-{
-    int cnt = bits[(int)(x & 0x0000000FL)];
-
-    while (0L != (x >>= 4)) {
-        cnt += bits[(int)(x & 0x0000000FL)];
-    }
-
-    return cnt;
-}
-

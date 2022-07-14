@@ -1,10 +1,10 @@
 
-#ifndef IMC_ANALYSIS_UART2TARGET_H_
-#define IMC_ANALYSIS_UART2TARGET_H_
+#ifndef BOARD_UART2TARGET_H_
+#define BOARD_UART2TARGET_H_
 
-#include <ImC/driverlib_include.h>
+#include <board/driverlib_include.h>
+#include <board/target.h>
 #include <msp430.h>
-#include <ImC/target.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -54,4 +54,4 @@
 
 void uart2target_init();
 
-#endif /* IMC_ANALYSIS_UART2TARGET_H_ */
+#endif /* BOARD_UART2TARGET_H_ */

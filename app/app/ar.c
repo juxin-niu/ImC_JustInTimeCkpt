@@ -1,7 +1,8 @@
-#include <app/ar.h>
-#include <app/app.h>
+#include <app/app_api.h>
+#include <app/app_global.h>
 
 // Shared Varaibles
+
 __nv uint16_t        i_debug;
 __nv uint16_t        ar_v_seed;
 
@@ -26,9 +27,6 @@ __nv ar_features_t   _v_model_moving[AR_MODEL_SIZE];
 __nv uint16_t resultStationaryPct[4];
 __nv uint16_t resultMovingPct[4];
 __nv uint16_t sum[4];
-
-void AR_SingleSample(threeAxis_t_8* result);
-
 
 void AR_main()
 {
@@ -99,7 +97,7 @@ void AR_main()
     Warm_Up:
     if (_v_discardedSamplesCount < AR_NUM_WARMUP_SAMPLES)
     {
-        AR_SingleSample(&tA8_sample);
+        AR_SingleSample(&tA8_sample, &ar_v_seed);
         _v_discardedSamplesCount++;
         goto Warm_Up;
     }
@@ -112,7 +110,7 @@ void AR_main()
 
     // ******************************************************************************
     AR_Sample:
-    AR_SingleSample(&aR_sample);
+    AR_SingleSample(&aR_sample, &ar_v_seed);
     _v_window[_v_samplesInWindow].x = aR_sample.x;
     _v_window[_v_samplesInWindow].y = aR_sample.y;
     _v_window[_v_samplesInWindow].z = aR_sample.z;
@@ -192,7 +190,6 @@ void AR_main()
         goto AR_Classify;
     }
 
-    // ******************************************************************************
     AR_Classify:
     move_less_error = 0;
     stat_less_error = 0;
@@ -235,7 +232,6 @@ void AR_main()
 
     _v_class = (move_less_error > stat_less_error) ? CLASS_MOVING : CLASS_STATIONARY;
 
-    AR_Stats:
     _v_totalCount++;
     switch(_v_class)
     {
@@ -257,7 +253,7 @@ void AR_main()
     }
     else
         goto AR_Sample;
-    // ******************************************************************************
+
     AR_Train:
     switch(_v_class)
     {
@@ -277,18 +273,6 @@ void AR_main()
     else
         goto Select_Mode;
 
-    // ******************************************************************************
     quit:
     return;
-}
-
-
-void AR_SingleSample(threeAxis_t_8* result)
-{
-    unsigned seed = ar_v_seed;
-
-    result->x = (seed * 17) % 85;
-    result->y = (seed * 17 * 17) % 85;
-    result->z = (seed * 17 * 17 * 17) % 85;
-    ar_v_seed = ++seed;
 }

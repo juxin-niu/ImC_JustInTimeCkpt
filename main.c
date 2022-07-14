@@ -1,17 +1,15 @@
-#include <ImC/nv.h>
-#include <ImC/target.h>
-#include <ImC/volt_monit.h>
-#include <ImC/analysis/hamming8.h>
-#include <ImC/analysis/uart2target.h>
+#include <app/app_api.h>
 
-#include <app/app.h>
-#include <ImC/driverlib_include.h>
-#include <ImC/led_button.h>
+#include <board/driverlib_include.h>
+#include <board/led_button.h>
+#include <board/nv.h>
+#include <board/target.h>
+#include <board/uart2target.h>
+#include <board/volt_monit.h>
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
-
-typedef void (*TBFUNCPTR)();
 
 __nv uint8_t snapshot_taking_error_flag = false;
 __nv uint8_t data_consistency_error_flag = false;
@@ -20,19 +18,21 @@ __nv uint8_t task_success_flag = false;
 __nv uint8_t recovery_needed = 0;
 __nv uint8_t system_in_lpm = 0;
 
+typedef void (*TBFUNCPTR)();
 __nv TBFUNCPTR tb_main[8] = {AR_main, BC_main, CEM_main, CRC_main, CUCKOO_main,
                              DIJKSTRA_main, RSA_main, SORT_main};
 
-__nv bool hamming_init_flag = false;
-__nv uint8_t hamming_scode[8] = {};
-__nv uint8_t hamming_ecode[8] = {};
+const uint8_t status_code[8][2] = {
+    {0, 15}, {51, 60}, {85, 90}, {102, 105},
+    {150, 153}, {165, 170}, {195, 204}, {240, 255}
+};
 
 extern void take_snapshot();
 extern void recovery();
 
 #define VOLT_MONIT_INTERVAL_IN_US         1000  // TODO: choose a proper value
-#define SNAPSHOT_VOLT_THRESHOLD            800  // TODO: choose a proper value
-#define RECOVERY_VOLT_THRESHOLD           1000  // TODO: choose a proper value
+#define SNAPSHOT_VOLT_THRESHOLD           2500  // in mV, TODO: choose a proper value
+#define RECOVERY_VOLT_THRESHOLD           3000  // in mV, TODO: choose a proper value
 
 int main()
 {
@@ -40,17 +40,10 @@ int main()
     clock_sys_init();
     dma_init();
     uart2target_init();
+
     ref_volt_init();
     adc_timer_init(VOLT_MONIT_INTERVAL_IN_US * WORKING_FREQUENCY_IN_MHZ);
     adc_init();
-
-    if (hamming_init_flag == false) {
-        for (uint16_t i = 0; i < 8; ++i) {
-            hamming_scode[i] = hamming_enc(2 * i);
-            hamming_ecode[i] = hamming_enc(2 * i + 1);
-        }
-        hamming_init_flag = true;
-    }
 
     // DEBUG ONLY.
     /* This flag is only used in Debug tests. We found that when the CCS project was in Flash,
@@ -87,19 +80,19 @@ int main()
     if (task_success_flag == true)              { turn_on_green_led; turn_on_red_led; LPM1; }
 
     /* Start ADC and its TimerA */
-    adc_start;
+//    adc_start;
 
-    system_in_lpm = 1;                      // System Enter LPM01.
-    __bis_SR_register(GIE | LPM1_bits);     // After initialization, Enable Interrupt and enter LPM1;
-    recovery_needed = 1;
+//    system_in_lpm = 1;                      // System Enter LPM01.
+//    __bis_SR_register(GIE | LPM1_bits);     // After initialization, Enable Interrupt and enter LPM1;
+//    recovery_needed = 1;
 
     // TODO: Tasks here.
-    uint16_t repeat_time = 6;
+    uint16_t repeat_time = 10;
     while ((repeat_time--) != 0) {
         for (uint16_t i = 0; i < 8; ++i) {
-            EUSCI_A_UART_transmitData(UART_BASEADDR, hamming_scode[i]);
+            EUSCI_A_UART_transmitData(UART_BASEADDR, status_code[i][0]);
             (* tb_main[i] )();
-            EUSCI_A_UART_transmitData(UART_BASEADDR, hamming_ecode[i]);
+            EUSCI_A_UART_transmitData(UART_BASEADDR, status_code[i][1]);
         }
     }
 
@@ -115,7 +108,15 @@ int main()
 #endif
 __interrupt void ADC12_ISR(void)
 {
-    register uint16_t volt = adc_read_memory;
+    uint16_t mem_read = adc_read_memory;
+
+#if defined(__MSP430FR5994__) || defined(__MSP430FR5969__)
+    // mem_read * ((2.0 / 4.096 * 2.2) * 1024)[=1100] / 1024
+    uint16_t volt = (uint16_t)( ((uint32_t)mem_read * 1100) >> 10 );
+#elif defined(__MSP430FR2433__)
+    // mem_erad * ((1.5 / 1.024 * 2.2) * 1024)[=3300] / 1024
+    uint16_t volt = (uint16_t)( ((uint32_t)mem_read * 3300) >> 10 );
+#endif
 
     if (system_in_lpm == 1 && volt > RECOVERY_VOLT_THRESHOLD) {
         if (recovery_needed == 0) {

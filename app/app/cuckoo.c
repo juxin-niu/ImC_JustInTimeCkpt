@@ -1,5 +1,5 @@
-#include <app/cuckoo.h>
-#include <app/app.h>
+#include <app/app_api.h>
+#include <app/app_global.h>
 
 // Shared Variables
  __nv cuckoo_value_t         _v_key;
@@ -20,12 +20,6 @@
  __nv TaskName               _v_next_task;
  __nv uint16_t               _v_success;
  __nv uint16_t               _v_member;
-
-
-inline cuckoo_hash_t CUCKOO_DjbHash(uint8_t* data, uint16_t len);
-inline cuckoo_index_t CUCKOO_Hash2Index(cuckoo_fingerprint_t fp);
-inline cuckoo_fingerprint_t CUCKOO_Hash2Fingerprint(cuckoo_value_t key);
-
 
 void CUCKOO_main()
 {
@@ -48,15 +42,17 @@ void CUCKOO_main()
     _v_key = cuckoo_init_key;
     _v_next_task = CUCKOO_Insert;
 
-    // ---------------------------------------------------------
     KeyGenerate:
     _v_key = (_v_key + 1) * 17;
-    if (_v_next_task == CUCKOO_Insert)
-        goto Insert;
-    else if (_v_next_task == CUCKOO_Lookup)
-        goto Lookup;
+    if (_v_next_task == CUCKOO_Insert) {
+        _v_next_task = CUCKOO_Add;
+        goto shared_calc_index;
+    }
+    else if (_v_next_task == CUCKOO_Lookup) {
+        _v_next_task = CUCKOO_Lookup_Search;
+        goto shared_calc_index;
+    }
 
-    // ---------------------------------------------------------
     shared_calc_index:
     _v_fingerprint = CUCKOO_Hash2Fingerprint(_v_key);
 
@@ -70,17 +66,9 @@ void CUCKOO_main()
     else if (_v_next_task == CUCKOO_Lookup_Search)
         goto Lookup_Search;
 
-    // ---------------------------------------------------------
-    Insert:
     _v_next_task = CUCKOO_Add;
     goto shared_calc_index;
 
-    // ---------------------------------------------------------
-    Lookup:
-    _v_next_task = CUCKOO_Lookup_Search;
-    goto shared_calc_index;
-
-    // ---------------------------------------------------------
     Add:
     __cry_idx = _v_index1;
     __cry_idx2 = _v_index2;
@@ -164,7 +152,6 @@ void CUCKOO_main()
         goto KeyGenerate;
     }
 
-    // ---------------------------------------------------------
     Lookup_Search:
 
     if (_v_filter[_v_index1] == _v_fingerprint)
@@ -192,26 +179,4 @@ void CUCKOO_main()
     final:
     return;
 
-}
-
-inline cuckoo_hash_t CUCKOO_DjbHash(uint8_t* data, uint16_t len)
-{
-    uint16_t hash = 5381;
-    uint16_t i;
-
-    for (i = 0; i < len; data++, i++)
-        hash = ((hash << 5) + hash) + (*data);
-
-    return hash & 0xFFFF;
-}
-
-inline cuckoo_index_t CUCKOO_Hash2Index(cuckoo_fingerprint_t fp)
-{
-    cuckoo_hash_t hash = CUCKOO_DjbHash((uint8_t *) &fp, sizeof(cuckoo_fingerprint_t));
-    return hash & (CUCKOO_NUM_BUCKETS - 1); // NUM_BUCKETS must be power of 2
-}
-
-inline cuckoo_fingerprint_t CUCKOO_Hash2Fingerprint(cuckoo_value_t key)
-{
-    return CUCKOO_DjbHash((uint8_t *) &key, sizeof(cuckoo_value_t));
 }

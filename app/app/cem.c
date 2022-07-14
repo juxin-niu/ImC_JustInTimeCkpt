@@ -1,6 +1,5 @@
-#include <app/cem.h>
-#include <app/app.h>
-#include <stdio.h>
+#include <app/app_api.h>
+#include <app/app_global.h>
 
 // Shared Variables
  __nv uint16_t       _v_letter_idx;
@@ -21,8 +20,6 @@
 
  __nv cem_node_t     _v_compressed_data[CEM_BLOCK_SIZE];
  __nv cem_node_t     _v_dict[CEM_DICT_SIZE];
-
-inline cem_sample_t CEM_AcquireSample(cem_letter_t prev_sample);
 
 void CEM_main()
 {
@@ -45,8 +42,6 @@ void CEM_main()
     _v_letter_idx = 0;
     _v_sample_count = 1;
 
-    // *********************************************************
-    Dict_Init:
 
     for (i = 0; i < CEM_NUM_LETTERS; ++i)
     {
@@ -58,7 +53,6 @@ void CEM_main()
     _v_letter = CEM_NUM_LETTERS + 1;
     _v_node_count = CEM_NUM_LETTERS;
 
-    // *********************************************************
     Sample:
     next_letter_idx = _v_letter_idx + 1;
     if (next_letter_idx == CEM_NUM_LETTERS_IN_SAMPLE)
@@ -72,10 +66,9 @@ void CEM_main()
     else
     {
         _v_letter_idx = next_letter_idx;
-        goto Letterize;
+        goto Letterize_and_compress;
     }
 
-    // *********************************************************
     Measure_Temp:
     prev_sample = _v_prev_sample;
     sample = CEM_AcquireSample(prev_sample);
@@ -83,8 +76,7 @@ void CEM_main()
     _v_prev_sample = prev_sample;
     _v_sample = sample;
 
-    // *********************************************************
-    Letterize:
+    Letterize_and_compress:
     letter_idx = _v_letter_idx;
     if (letter_idx == 0)
         letter_idx = CEM_NUM_LETTERS_IN_SAMPLE;
@@ -95,7 +87,6 @@ void CEM_main()
     letter = ( _v_sample & (CEM_LETTER_MASK << letter_shift) ) >> letter_shift;
     _v_letter = letter;
 
-    Compress:
     parent = _v_parent_next;
     _v_parent_node.letter = _v_dict[parent].letter;
     _v_parent_node.sibling = _v_dict[parent].sibling;
@@ -112,7 +103,7 @@ void CEM_main()
         if(_v_dict[idx].letter == _v_letter)
         {
             _v_parent_next = _v_sibling;
-            goto Letterize;
+            goto Letterize_and_compress;
         }
         else
         {
@@ -132,7 +123,6 @@ void CEM_main()
         goto Add_Node;
 
 
-    // *********************************************************
     Add_Node:
     i = _v_sibling;
     if (_v_dict[i].sibling != CEM_NIL)
@@ -175,7 +165,6 @@ void CEM_main()
     _v_symbol = _v_parent;
     _v_node_count++;
 
-    AppendCompressed:
     _v_compressed_data[_v_out_len].letter = _v_symbol;
     _v_out_len++;
     if(_v_out_len == CEM_BLOCK_SIZE)
@@ -183,10 +172,3 @@ void CEM_main()
     else
         goto Sample;
 }
-
-
-inline cem_sample_t CEM_AcquireSample(cem_letter_t prev_sample)
- {
-     cem_letter_t sample = (prev_sample + 1) & 0x03;
-     return sample;
- }

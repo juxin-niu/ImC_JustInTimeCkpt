@@ -1,6 +1,6 @@
 
-#ifndef IMC_VOLT_MONIT_H_
-#define IMC_VOLT_MONIT_H_
+#ifndef BOARD_VOLT_MONIT_H_
+#define BOARD_VOLT_MONIT_H_
 
 #include <stdint.h>
 
@@ -52,4 +52,4 @@ void adc_init();
 
 #endif
 
-#endif /* IMC_VOLT_MONIT_H_ */
+#endif /* BOARD_VOLT_MONIT_H_ */
